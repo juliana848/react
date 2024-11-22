@@ -1,35 +1,96 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Navbar, Nav, Form, FormControl, Button } from 'react-bootstrap';
+import ProductCard from './components/ProductCard';
+import ShoppingCart from './components/ShoppingCart';
+import { FaShoppingCart } from 'react-icons/fa';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('https://api.escuelajs.co/api/v1/categories/3/products');
+        const data = await response.json();
+        const formattedProducts = data.map(product => ({
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          image: product.images[0],
+          description: product.description
+        }));
+        setProducts(formattedProducts);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const toggleCart = () => {
+    setCartOpen(!cartOpen);
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4">
+        <Container fluid>
+          <Navbar.Brand href="#home">Tienda de Muebles</Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="me-auto">
+              <Nav.Link href="#products">Productos</Nav.Link>
+            </Nav>
+            <Form className="d-flex">
+              <FormControl
+                type="search"
+                placeholder="Buscar productos..."
+                className="me-2"
+                aria-label="Search"
+              />
+              <Button variant="outline-light">Buscar</Button>
+            </Form>
+            <Button 
+              variant="outline-light" 
+              className="ms-2"
+              onClick={toggleCart}
+            >
+              <FaShoppingCart />
+            </Button>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
 
-export default App
+      <Container fluid>
+        <Row>
+          <Col md={9}>
+            {loading ? (
+              <div className="text-center mt-5">
+                <h3>Cargando productos...</h3>
+              </div>
+            ) : (
+              <Row>
+                {products.map(product => (
+                  <Col key={product.id} sm={6} lg={4} className="mb-4">
+                    <ProductCard product={product} />
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </Col>
+          <Col md={3} className={cartOpen ? 'd-block' : 'd-none d-md-block'}>
+            <ShoppingCart />
+          </Col>
+        </Row>
+      </Container>
+    </>
+  );
+};
+
+export default App;
